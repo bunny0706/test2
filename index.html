@@ -16,16 +16,52 @@
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
         }
+
+        h1 {
+            color: #333;
+        }
+
         #interactive {
-            width: 90%;
-            max-width: 320px;
-            aspect-ratio: 4 / 3;
-            border: 1px solid #ddd;
+            width: 5.5in;
+            height: 8.5in;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            background-color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
             margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #start-button, #stop-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            transition: background-color 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #start-button:hover, #stop-button:hover {
+            background-color: #45a049;
+        }
+
+        #stop-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
         #scanned-products {
             list-style: none;
             padding: 0;
@@ -33,6 +69,7 @@
             width: 90%;
             max-width: 320px;
         }
+
         #scanned-products li {
             margin: 10px 0;
             padding: 10px;
@@ -42,34 +79,48 @@
             justify-content: space-between;
             align-items: center;
             background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .product-info {
             text-align: left;
             flex-grow: 1;
         }
+
         .quantity-controls {
             display: flex;
             align-items: center;
         }
+
         .quantity-controls button {
             margin: 0 5px;
             padding: 5px 10px;
             font-size: 16px;
-        }
-        button#start-button,
-        button#stop-button {
-            margin: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .quantity-controls button:hover {
+            background-color: #45a049;
+        }
+
+        .quantity {
+            font-size: 16px;
+            padding: 0 10px;
         }
     </style>
 </head>
 <body>
     <h1>Barcode Scanner</h1>
     <div id="interactive" class="viewport"></div>
-    <button id="start-button">Start Scanning</button>
-    <button id="stop-button" disabled>Stop Scanning</button>
+    <div id="controls">
+        <button id="start-button">Start Scanning</button>
+        <button id="stop-button" disabled>Stop Scanning</button>
+    </div>
     <h2>Scanned Products</h2>
     <ul id="scanned-products"></ul>
 
@@ -159,11 +210,11 @@
                 inputStream: {
                     name: "Live",
                     type: "LiveStream",
-                    target: document.querySelector('#interactive'), // Single target for video stream
+                    target: document.querySelector('#interactive'),
                     constraints: {
                         facingMode: "environment",
-                        width: { min: 320, ideal: 640, max: 1280 },  // Adjust width for mobile
-                        height: { min: 240, ideal: 480, max: 720 }  // Adjust height for mobile
+                        width: { min: 320, ideal: 640, max: 1280 },
+                        height: { min: 240, ideal: 480, max: 720 }
                     }
                 },
                 decoder: {
@@ -214,13 +265,9 @@
             handleBarcodeDetection(barcode);
         });
 
-        // Mobile-specific event listeners
         document.getElementById('start-button').addEventListener('click', startScanning);
-        document.getElementById('start-button').addEventListener('touchstart', startScanning);
         document.getElementById('stop-button').addEventListener('click', stopScanning);
-        document.getElementById('stop-button').addEventListener('touchstart', stopScanning);
 
-        // Initialize Quagga when the page is ready
         document.addEventListener('DOMContentLoaded', setupQuagga);
     </script>
 </body>
