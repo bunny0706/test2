@@ -3,178 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Awesome Website</title>
+    <title>Barcode Scanner with Product Details</title>
     <style>
-        /* General Reset */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
-        /* Basic Body Styling */
         body {
-            line-height: 1.6;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-
-        /* Container */
-        .container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* Header Styling */
-        header {
-            background-color: #333;
-            color: #fff;
-            padding: 20px 0;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 2em;
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        nav ul {
-            list-style: none;
-            display: flex;
-        }
-
-        nav ul li {
-            margin-left: 20px;
-        }
-
-        nav ul li a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        /* Main Content Styling */
-        main {
-            padding: 20px 0;
-        }
-
-        main section {
-            padding: 20px;
-            background: #fff;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        main section h2 {
-            margin-bottom: 10px;
-        }
-
-        /* Footer Styling */
-        footer {
-            background-color: #333;
-            color: #fff;
+            font-family: Arial, sans-serif;
             text-align: center;
-            padding: 10px 0;
+            padding: 20px;
         }
-
-        /* Mobile Menu Toggle */
-        .menu-toggle {
-            display: none;
-            flex-direction: column;
-            cursor: pointer;
+        #interactive {
+            margin: 0 auto;
+            width: 640px;
+            height: 480px;
+            border: 1px solid #ccc;
         }
-
-        .menu-toggle .bar {
-            width: 25px;
-            height: 3px;
-            background-color: #fff;
-            margin: 4px 0;
+        #scanned-products {
+            list-style: none;
+            padding: 0;
         }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            nav ul {
-                flex-direction: column;
-                display: none;
-            }
-
-            .menu-toggle {
-                display: flex;
-            }
-
-            nav ul.active {
-                display: flex;
-            }
-
-            nav ul li {
-                margin: 10px 0;
-            }
+        #scanned-products li {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
-    <!-- Header Section -->
-    <header>
-        <div class="container">
-            <h1>My Awesome Website</h1>
-            <nav>
-                <ul id="nav-list">
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#services">Services</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                </ul>
-                <div class="menu-toggle" id="mobile-menu">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                </div>
-            </nav>
-        </div>
-    </header>
+    <h1>Barcode Scanner</h1>
+    <div id="interactive" class="viewport"></div>
+    <button id="start-button">Start Scanning</button>
+    <button id="stop-button" disabled>Stop Scanning</button>
+    <h2>Scanned Products</h2>
+    <ul id="scanned-products"></ul>
 
-    <!-- Main Content -->
-    <main>
-        <section id="home">
-            <h2>Welcome to My Website</h2>
-            <p>This is a paragraph about the website. Enjoy browsing through!</p>
-        </section>
-        <section id="about">
-            <h2>About Us</h2>
-            <p>We are a company that does amazing things. Learn more about us here.</p>
-        </section>
-        <section id="services">
-            <h2>Our Services</h2>
-            <p>We offer a variety of services to meet your needs. Check them out!</p>
-        </section>
-        <section id="contact">
-            <h2>Contact Us</h2>
-            <p>Feel free to reach out to us through our social channels or email.</p>
-        </section>
-    </main>
-
-    <!-- Footer Section -->
-    <footer>
-        <p>&copy; 2024 My Awesome Website. All rights reserved.</p>
-    </footer>
-
-    <!-- JavaScript -->
+    <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
     <script>
-        // Mobile Menu Toggle Functionality
-        const mobileMenu = document.getElementById('mobile-menu');
-        const navList = document.getElementById('nav-list');
+        let scannedBarcodes = new Set();
+        let scanning = false;
 
-        mobileMenu.addEventListener('click', () => {
-            navList.classList.toggle('active');
+        function displayProductDetails(barcode) {
+            const details = {
+                "123456": {
+                    name: "Soap",
+                    price: "20 INR",
+                    weight: "50g",
+                    discount: "5%",
+                    expiryDate: "2024-12-31"
+                },
+                "789012": {
+                    name: "Shampoo",
+                    price: "120 INR",
+                    weight: "200ml",
+                    discount: "10%",
+                    expiryDate: "2024-11-30"
+                }
+            };
+
+            const productList = document.getElementById('scanned-products');
+            if (details[barcode]) {
+                const product = `
+                    <li>
+                        <p><strong>Barcode:</strong> ${barcode}</p>
+                        <p><strong>Name:</strong> ${details[barcode].name}</p>
+                        <p><strong>Price:</strong> ${details[barcode].price}</p>
+                        <p><strong>Weight:</strong> ${details[barcode].weight}</p>
+                        <p><strong>Discount:</strong> ${details[barcode].discount}</p>
+                        <p><strong>Expiry Date:</strong> ${details[barcode].expiryDate}</p>
+                    </li>
+                `;
+                productList.innerHTML += product;
+            } else {
+                productList.innerHTML += <li>Product not found for barcode: ${barcode}</li>;
+            }
+        }
+
+        function startScanning() {
+            if (!scanning) {
+                scanning = true;
+                Quagga.start();
+                document.getElementById('start-button').disabled = true;
+                document.getElementById('stop-button').disabled = false;
+            }
+        }
+
+        function stopScanning() {
+            if (scanning) {
+                scanning = false;
+                Quagga.stop();
+                document.getElementById('start-button').disabled = false;
+                document.getElementById('stop-button').disabled = true;
+            }
+        }
+
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: document.querySelector('#interactive'),
+                constraints: {
+                    width: 640,
+                    height: 480,
+                    facingMode: "environment"
+                }
+            },
+            decoder: {
+                readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
+            },
+            locate: true
+        }, function(err) {
+            if (err) {
+                console.error("Initialization error:", err);
+                alert("Error initializing the scanner: " + err.message);
+                return;
+            }
+            console.log("Initialization finished. Ready to start scanning");
         });
+
+        function isValidBarcode(barcode) {
+            return /^\d{6,12}$/.test(barcode); // Validates 6 to 12 digit barcodes
+        }
+
+        let lastBarcode = "";
+        let debounceTimer = null;
+
+        function handleBarcodeDetection(barcode) {
+            if (barcode !== lastBarcode) {
+                lastBarcode = barcode;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    if (isValidBarcode(barcode)) {
+                        if (!scannedBarcodes.has(barcode)) {
+                            displayProductDetails(barcode);
+                            scannedBarcodes.add(barcode);
+                        } else {
+                            console.log(Barcode ${barcode} already scanned.);
+                        }
+                        // Adding a small delay to prevent re-scanning the same code
+                        setTimeout(() => {
+                            lastBarcode = "";
+                        }, 1000);
+                    } else {
+                        console.log(Invalid or false positive barcode detected: ${barcode});
+                    }
+                }, 500);
+            }
+        }
+
+        Quagga.onDetected(function(data) {
+            const barcode = data.codeResult.code;
+            console.log(Detected barcode: ${barcode});
+            handleBarcodeDetection(barcode);
+        });
+
+        document.getElementById('start-button').addEventListener('click', startScanning);
+        document.getElementById('stop-button').addEventListener('click', stopScanning);
     </script>
 </body>
 </html>
