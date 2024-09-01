@@ -19,7 +19,6 @@
 
         h1 {
             color: #333;
-            margin-bottom: 20px;
         }
 
         #interactive {
@@ -74,22 +73,18 @@
             cursor: not-allowed;
         }
 
-        #scanned-products-container {
-            width: 5.5in;
-            max-height: 300px; /* Limit the height of the scanned items container */
-            overflow-y: scroll; /* Enable scrolling */
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 10px;
-            margin-bottom: 20px;
-        }
-
         #scanned-products {
             list-style: none;
             padding: 0;
-            margin: 0;
+            margin: 20px 0;
+            width: 90%;
+            max-width: 320px;
+            max-height: 200px; /* Set a maximum height */
+            overflow-y: auto;  /* Enable vertical scrolling */
+            border: 1px solid #ddd; /* Optional: add a border for better visibility */
+            border-radius: 4px;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         #scanned-products li {
@@ -100,7 +95,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #f9f9f9;
+            background-color: #fff;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
@@ -145,10 +140,8 @@
         <button id="start-button">Start Scanning</button>
         <button id="stop-button" disabled>Stop Scanning</button>
     </div>
-    <div id="scanned-products-container">
-        <h2>Scanned Products</h2>
-        <ul id="scanned-products"></ul>
-    </div>
+    <h2>Scanned Products</h2>
+    <ul id="scanned-products"></ul>
 
     <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
     <script>
@@ -251,21 +244,26 @@
                     readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
                 },
                 locate: true
-            }, function(err) {
+            }, function (err) {
                 if (err) {
-                    console.error("Initialization error:", err);
-                    alert("Error initializing the scanner: " + err.message);
+                    console.error(err);
                     return;
                 }
-                console.log("Initialization finished. Ready to start scanning");
+                console.log("Quagga initialized successfully.");
+                Quagga.start();
+            });
+
+            Quagga.onDetected(function (result) {
+                const barcode = result.codeResult.code;
+                console.log(`Barcode detected: ${barcode}`);
+                displayProductDetails(barcode);
             });
         }
 
-        function isValidBarcode(barcode) {
-            return /^\d{6,12}$/.test(barcode); // Validates 6 to 12 digit barcodes
-        }
+        document.getElementById('start-button').addEventListener('click', startScanning);
+        document.getElementById('stop-button').addEventListener('click', stopScanning);
 
-        let lastBarcode = "";
-        let debounceTimer = null;
-
-       
+        setupQuagga();
+    </script>
+</body>
+</html>
