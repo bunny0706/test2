@@ -19,6 +19,7 @@
 
         h1 {
             color: #333;
+            margin-bottom: 20px;
         }
 
         #interactive {
@@ -73,12 +74,22 @@
             cursor: not-allowed;
         }
 
+        #scanned-products-container {
+            width: 5.5in;
+            max-height: 300px; /* Limit the height of the scanned items container */
+            overflow-y: scroll; /* Enable scrolling */
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
         #scanned-products {
             list-style: none;
             padding: 0;
-            margin: 20px 0;
-            width: 90%;
-            max-width: 320px;
+            margin: 0;
         }
 
         #scanned-products li {
@@ -89,7 +100,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #fff;
+            background-color: #f9f9f9;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
@@ -134,8 +145,10 @@
         <button id="start-button">Start Scanning</button>
         <button id="stop-button" disabled>Stop Scanning</button>
     </div>
-    <h2>Scanned Products</h2>
-    <ul id="scanned-products"></ul>
+    <div id="scanned-products-container">
+        <h2>Scanned Products</h2>
+        <ul id="scanned-products"></ul>
+    </div>
 
     <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
     <script>
@@ -255,33 +268,4 @@
         let lastBarcode = "";
         let debounceTimer = null;
 
-        function handleBarcodeDetection(barcode) {
-            if (barcode !== lastBarcode) {
-                lastBarcode = barcode;
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => {
-                    if (isValidBarcode(barcode)) {
-                        if (!scannedBarcodes.has(barcode)) {
-                            displayProductDetails(barcode);
-                        } else {
-                            updateProductQuantity(barcode, 1);
-                        }
-                    }
-                    lastBarcode = ""; // Reset for the next scan
-                }, 300); // Adding debounce to avoid rapid scans
-            }
-        }
-
-        Quagga.onDetected(function(result) {
-            const barcode = result.codeResult.code;
-            console.log("Detected barcode:", barcode);
-            handleBarcodeDetection(barcode);
-        });
-
-        document.getElementById('start-button').addEventListener('click', startScanning);
-        document.getElementById('stop-button').addEventListener('click', stopScanning);
-
-        setupQuagga();
-    </script>
-</body>
-</html>
+       
