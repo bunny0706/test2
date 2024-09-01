@@ -33,6 +33,16 @@
             margin-bottom: 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             overflow: hidden; /* Ensure camera feed stays within bounds */
+            position: relative; /* for centering video */
+        }
+
+        #interactive video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: auto;
+            height: 100%;
         }
 
         #controls {
@@ -117,7 +127,9 @@
 </head>
 <body>
     <h1>Barcode Scanner</h1>
-    <div id="interactive" class="viewport"></div>
+    <div id="interactive" class="viewport">
+        <!-- The video feed will be positioned and sized within this div -->
+    </div>
     <div id="controls">
         <button id="start-button">Start Scanning</button>
         <button id="stop-button" disabled>Stop Scanning</button>
@@ -214,8 +226,8 @@
                     target: document.querySelector('#interactive'),
                     constraints: {
                         facingMode: "environment",
-                        width: { exact: 720 },  // Ensure the width and height match the aspect ratio of the scanner box
-                        height: { exact: 1110 }  // Adjust height for the exact frame size (5.5" x 8.5")
+                        width: { ideal: 1280 },  // Ensuring proper width
+                        height: { ideal: 720 }   // Adjusting the height
                     }
                 },
                 locator: {
@@ -254,26 +266,22 @@
                         } else {
                             updateProductQuantity(barcode, 1);
                         }
-                        setTimeout(() => {
-                            lastBarcode = "";
-                        }, 1000);
-                    } else {
-                        console.log(`Invalid or false positive barcode detected: ${barcode}`);
                     }
-                }, 500);
+                    lastBarcode = ""; // Reset for the next scan
+                }, 300); // Adding debounce to avoid rapid scans
             }
         }
 
-        Quagga.onDetected(function(data) {
-            const barcode = data.codeResult.code;
-            console.log(`Detected barcode: ${barcode}`);
+        Quagga.onDetected(function(result) {
+            const barcode = result.codeResult.code;
+            console.log("Detected barcode:", barcode);
             handleBarcodeDetection(barcode);
         });
 
         document.getElementById('start-button').addEventListener('click', startScanning);
         document.getElementById('stop-button').addEventListener('click', stopScanning);
 
-        document.addEventListener('DOMContentLoaded', setupQuagga);
+        setupQuagga();
     </script>
 </body>
 </html>
