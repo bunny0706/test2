@@ -159,7 +159,7 @@
         let debounceTimer = null;
 
         function updateProductQuantity(barcode, increment) {
-            const productElement = document.querySelector([data-barcode="${barcode}"] .quantity);
+            const productElement = document.querySelector(`[data-barcode="${barcode}"] .quantity`);
             if (productElement) {
                 productQuantities[barcode] = Math.max(0, (productQuantities[barcode] || 0) + increment);
                 productElement.textContent = productQuantities[barcode];
@@ -211,7 +211,7 @@
                     updateProductQuantity(barcode, 1);
                 }
             } else {
-                productList.innerHTML += <li>Product not found for barcode: ${barcode}</li>;
+                productList.innerHTML += `<li>Product not found for barcode: ${barcode}</li>`;
             }
         }
 
@@ -227,6 +227,7 @@
         function stopScanning() {
             if (scanning) {
                 scanning = false;
+                clearTimeout(debounceTimer); // Clear the debounce timer
                 Quagga.stop();
                 document.getElementById('start-button').disabled = false;
                 document.getElementById('stop-button').disabled = true;
@@ -283,19 +284,21 @@
                     if (result.codeResult && result.codeResult.code) {
                         clearTimeout(debounceTimer);
                         debounceTimer = setTimeout(() => {
-                            if (result.codeResult.code !== lastBarcode) {
-                                lastBarcode = result.codeResult.code;
-                                console.log("Barcode detected and processed: [" + result.codeResult.code + "]", result);
-                                displayProductDetails(result.codeResult.code);
-                            }
-                        }, 1000);  // Adjust the debounce delay to avoid multiple detections
+                            lastBarcode = result.codeResult.code;
+                            displayProductDetails(lastBarcode);
+                        }, 500);
                     }
                 }
             });
         }
 
-        document.getElementById('start-button').addEventListener('click', startScanning);
-        document.getElementById('stop-button').addEventListener('click', stopScanning);
+        document.getElementById('start-button').addEventListener('click', function() {
+            startScanning();
+        });
+
+        document.getElementById('stop-button').addEventListener('click', function() {
+            stopScanning();
+        });
 
         setupQuagga();
     </script>
