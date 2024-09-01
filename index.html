@@ -33,14 +33,17 @@
             align-items: center;
             margin-bottom: 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            position: relative;
+            overflow: hidden; /* Ensure camera feed stays within bounds */
+            position: relative; /* for centering video */
         }
 
         #interactive video {
-            width: 100%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: auto;
             height: 100%;
-            object-fit: cover;
         }
 
         #controls {
@@ -73,8 +76,8 @@
 
         #scanned-products-container {
             width: 640px;
-            max-height: 300px;
-            overflow-y: scroll;
+            max-height: 300px; /* Limit the height of the scanned items container */
+            overflow-y: scroll; /* Enable scrolling */
             background-color: #fff;
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -137,7 +140,7 @@
     <h1>Barcode Scanner</h1>
     <div id="interactive" class="viewport">
         <!-- The video feed will be positioned and sized within this div -->
-        <video autoplay></video>
+        <video></video>
     </div>
     <div id="controls">
         <button id="start-button">Start Scanning</button>
@@ -154,7 +157,7 @@
         let productQuantities = {};
         let scanning = false;
         let lastBarcode = "";
-        let debounceTimer;
+        let debounceTimer = null;
 
         function updateProductQuantity(barcode, increment) {
             const productElement = document.querySelector(`[data-barcode="${barcode}"] .quantity`);
@@ -276,13 +279,15 @@
         }
 
         function isValidBarcode(barcode) {
-            return /^\d{6,12}$/.test(barcode);
+            return /^\d{6,12}$/.test(barcode); // Validates 6 to 12 digit barcodes
         }
 
-        document.getElementById('start-button').addEventListener('click', startScanning);
-        document.getElementById('stop-button').addEventListener('click', stopScanning);
-
-        setupQuagga();
+        // Ensure the buttons are set up after the page loads
+        window.addEventListener('load', function() {
+            document.getElementById('start-button').addEventListener('click', startScanning);
+            document.getElementById('stop-button').addEventListener('click', stopScanning);
+            setupQuagga();  // Initialize Quagga when the page loads
+        });
     </script>
 </body>
 </html>
