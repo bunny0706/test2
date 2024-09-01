@@ -3,160 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barcode Scanner with Product Details</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-        }
-        #interactive {
-            margin: 0 auto;
-            width: 640px;
-            height: 480px;
-            border: 1px solid #ccc;
-        }
-        #scanned-products {
-            list-style: none;
-            padding: 0;
-        }
-        #scanned-products li {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-    </style>
+    <title>Simple QuaggaJS Barcode Scanner</title>
+    <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
 </head>
 <body>
-    <h1>Barcode Scanner</h1>
+    <h1>Barcode Scanner Test</h1>
     <div id="interactive" class="viewport"></div>
-    <button id="start-button">Start Scanning</button>
-    <button id="stop-button" disabled>Stop Scanning</button>
-    <h2>Scanned Products</h2>
-    <ul id="scanned-products"></ul>
 
-    <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
     <script>
-        let scannedBarcodes = new Set();
-        let scanning = false;
-
-        function displayProductDetails(barcode) {
-            const details = {
-                "123456": {
-                    name: "Soap",
-                    price: "20 INR",
-                    weight: "50g",
-                    discount: "5%",
-                    expiryDate: "2024-12-31"
-                },
-                "789012": {
-                    name: "Shampoo",
-                    price: "120 INR",
-                    weight: "200ml",
-                    discount: "10%",
-                    expiryDate: "2024-11-30"
-                }
-            };
-
-            const productList = document.getElementById('scanned-products');
-            if (details[barcode]) {
-                const product = `
-                    <li>
-                        <p><strong>Barcode:</strong> ${barcode}</p>
-                        <p><strong>Name:</strong> ${details[barcode].name}</p>
-                        <p><strong>Price:</strong> ${details[barcode].price}</p>
-                        <p><strong>Weight:</strong> ${details[barcode].weight}</p>
-                        <p><strong>Discount:</strong> ${details[barcode].discount}</p>
-                        <p><strong>Expiry Date:</strong> ${details[barcode].expiryDate}</p>
-                    </li>
-                `;
-                productList.innerHTML += product;
-            } else {
-                productList.innerHTML += <li>Product not found for barcode: ${barcode}</li>;
-            }
-        }
-
-        function startScanning() {
-            if (!scanning) {
-                scanning = true;
-                Quagga.start();
-                document.getElementById('start-button').disabled = true;
-                document.getElementById('stop-button').disabled = false;
-            }
-        }
-
-        function stopScanning() {
-            if (scanning) {
-                scanning = false;
-                Quagga.stop();
-                document.getElementById('start-button').disabled = false;
-                document.getElementById('stop-button').disabled = true;
-            }
-        }
-
         Quagga.init({
             inputStream: {
                 name: "Live",
                 type: "LiveStream",
                 target: document.querySelector('#interactive'),
                 constraints: {
-                    width: 640,
-                    height: 480,
-                    facingMode: "environment"
+                    facingMode: "environment" // or "user" for front camera
                 }
             },
             decoder: {
-                readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
-            },
-            locate: true
+                readers: ["code_128_reader"]
+            }
         }, function(err) {
             if (err) {
-                console.error("Initialization error:", err);
-                alert("Error initializing the scanner: " + err.message);
+                console.error(err);
                 return;
             }
-            console.log("Initialization finished. Ready to start scanning");
+            console.log("Initialization finished. Ready to start");
+            Quagga.start();
         });
-
-        function isValidBarcode(barcode) {
-            return /^\d{6,12}$/.test(barcode); // Validates 6 to 12 digit barcodes
-        }
-
-        let lastBarcode = "";
-        let debounceTimer = null;
-
-        function handleBarcodeDetection(barcode) {
-            if (barcode !== lastBarcode) {
-                lastBarcode = barcode;
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => {
-                    if (isValidBarcode(barcode)) {
-                        if (!scannedBarcodes.has(barcode)) {
-                            displayProductDetails(barcode);
-                            scannedBarcodes.add(barcode);
-                        } else {
-                            console.log(Barcode ${barcode} already scanned.);
-                        }
-                        // Adding a small delay to prevent re-scanning the same code
-                        setTimeout(() => {
-                            lastBarcode = "";
-                        }, 1000);
-                    } else {
-                        console.log(Invalid or false positive barcode detected: ${barcode});
-                    }
-                }, 500);
-            }
-        }
 
         Quagga.onDetected(function(data) {
-            const barcode = data.codeResult.code;
-            console.log(Detected barcode: ${barcode});
-            handleBarcodeDetection(barcode);
+            console.log(data.codeResult.code);
         });
-
-        document.getElementById('start-button').addEventListener('click', startScanning);
-        document.getElementById('stop-button').addEventListener('click', stopScanning);
     </script>
 </body>
 </html>
