@@ -32,6 +32,7 @@
             align-items: center;
             margin-bottom: 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Ensure camera feed stays within bounds */
         }
 
         #controls {
@@ -213,9 +214,13 @@
                     target: document.querySelector('#interactive'),
                     constraints: {
                         facingMode: "environment",
-                        width: { min: 320, ideal: 640, max: 1280 },
-                        height: { min: 240, ideal: 480, max: 720 }
+                        width: { exact: 720 },  // Ensure the width and height match the aspect ratio of the scanner box
+                        height: { exact: 1110 }  // Adjust height for the exact frame size (5.5" x 8.5")
                     }
+                },
+                locator: {
+                    patchSize: "medium",
+                    halfSample: false
                 },
                 decoder: {
                     readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
