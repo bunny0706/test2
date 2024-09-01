@@ -4,45 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barcode Scanner with Product Details</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-        }
-        #interactive {
-            margin: 0 auto;
-            width: 640px;
-            height: 480px;
-            border: 1px solid #ccc;
-        }
-        #scanned-products {
-            list-style: none;
-            padding: 0;
-        }
-        #scanned-products li {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-    </style>
 </head>
 <body>
     <h1>Barcode Scanner</h1>
     <div id="interactive" class="viewport"></div>
-    <button id="start-button">Start Scanning</button>
-    <button id="stop-button" disabled>Stop Scanning</button>
+    <div id="product-details"></div>
     <h2>Scanned Products</h2>
     <ul id="scanned-products"></ul>
+    <button id="complete-billing" style="display:none;" onclick="completeBilling()">Complete Billing</button>
 
     <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
     <script>
-        let scannedBarcodes = new Set();
-        let scanning = false;
+        let scannedProducts = [];
 
+        // Function to display product details
         function displayProductDetails(barcode) {
-            const details = {
+            let details = {
                 "123456": {
                     name: "Soap",
                     price: "20 INR",
@@ -59,9 +36,8 @@
                 }
             };
 
-            const productList = document.getElementById('scanned-products');
             if (details[barcode]) {
-                const product = `
+                let product = `
                     <li>
                         <p><strong>Barcode:</strong> ${barcode}</p>
                         <p><strong>Name:</strong> ${details[barcode].name}</p>
@@ -71,30 +47,14 @@
                         <p><strong>Expiry Date:</strong> ${details[barcode].expiryDate}</p>
                     </li>
                 `;
-                productList.innerHTML += product;
+                document.getElementById('scanned-products').innerHTML += product;
+                scannedProducts.push(details[barcode]); // Add product to scanned list
             } else {
-                productList.innerHTML += <li>Product not found for barcode: ${barcode}</li>;
+                document.getElementById('scanned-products').innerHTML += <li>Product not found for barcode: ${barcode}</li>;
             }
         }
 
-        function startScanning() {
-            if (!scanning) {
-                scanning = true;
-                Quagga.start();
-                document.getElementById('start-button').disabled = true;
-                document.getElementById('stop-button').disabled = false;
-            }
-        }
-
-        function stopScanning() {
-            if (scanning) {
-                scanning = false;
-                Quagga.stop();
-                document.getElementById('start-button').disabled = false;
-                document.getElementById('stop-button').disabled = true;
-            }
-        }
-
+        // Initialize QuaggaJS
         Quagga.init({
             inputStream: {
                 name: "Live",
@@ -103,60 +63,61 @@
                 constraints: {
                     width: 640,
                     height: 480,
-                    facingMode: "environment"
-                }
+                    facingMode: "environment" // Use "user" for the front camera
+                },
             },
             decoder: {
-                readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
+                readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "code_39_vin_reader", "upc_reader", "upc_e_reader", "codabar_reader", "i2of5_reader", "2of5_reader", "code_93_reader"] // Add more as needed
             },
-            locate: true
         }, function(err) {
             if (err) {
-                console.error("Initialization error:", err);
-                alert("Error initializing the scanner: " + err.message);
+                console.log(err);
                 return;
             }
             console.log("Initialization finished. Ready to start scanning");
+            Quagga.start(); // Start scanning immediately after initialization
         });
 
-        function isValidBarcode(barcode) {
-            return /^\d{6,12}$/.test(barcode); // Validates 6 to 12 digit barcodes
-        }
+        // Flag to avoid multiple detections of the same barcode
+        let lastDetectedCode = null;
+        let detectionDebounce = false;
 
-        let lastBarcode = "";
-        let debounceTimer = null;
-
-        function handleBarcodeDetection(barcode) {
-            if (barcode !== lastBarcode) {
-                lastBarcode = barcode;
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => {
-                    if (isValidBarcode(barcode)) {
-                        if (!scannedBarcodes.has(barcode)) {
-                            displayProductDetails(barcode);
-                            scannedBarcodes.add(barcode);
-                        } else {
-                            console.log(Barcode ${barcode} already scanned.);
-                        }
-                        // Adding a small delay to prevent re-scanning the same code
-                        setTimeout(() => {
-                            lastBarcode = "";
-                        }, 1000);
-                    } else {
-                        console.log(Invalid or false positive barcode detected: ${barcode});
-                    }
-                }, 500);
-            }
-        }
-
+        // When a barcode is detected
         Quagga.onDetected(function(data) {
-            const barcode = data.codeResult.code;
+            if (detectionDebounce) return;
+
+            let barcode = data.codeResult.code;
             console.log(Detected barcode: ${barcode});
-            handleBarcodeDetection(barcode);
+
+            // Avoid processing the same barcode multiple times
+            if (barcode !== lastDetectedCode) {
+                lastDetectedCode = barcode;
+                displayProductDetails(barcode); // Display the product details
+            }
+
+            detectionDebounce = true;
+
+            // Reset detection after a short delay to scan the next barcode
+            setTimeout(() => {
+                detectionDebounce = false;
+                lastDetectedCode = null;
+            }, 1500); // Adjust the delay if necessary
+
+            // Show the "Complete Billing" button if products have been scanned
+            if (scannedProducts.length > 0) {
+                document.getElementById('complete-billing').style.display = 'block';
+            }
         });
 
-        document.getElementById('start-button').addEventListener('click', startScanning);
-        document.getElementById('stop-button').addEventListener('click', stopScanning);
+        // Function to handle completion of billing
+        function completeBilling() {
+            alert("Billing Completed!"); // Replace with actual billing logic
+            // Optionally, you could clear the scanned products list, stop Quagga, etc.
+            Quagga.stop();
+            document.getElementById('scanned-products').innerHTML = ''; // Clear scanned products list
+            document.getElementById('complete-billing').style.display = 'none'; // Hide the button
+            scannedProducts = []; // Reset the scanned products array
+        }
     </script>
 </body>
 </html>
