@@ -33,17 +33,17 @@
             align-items: center;
             margin-bottom: 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            overflow: hidden; /* Ensure camera feed stays within bounds */
-            position: relative; /* for centering video */
+            overflow: hidden;
+            position: relative;
         }
 
         #interactive video {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: auto;
+            top: 0;
+            left: 0;
+            width: 100%;
             height: 100%;
+            object-fit: cover;
         }
 
         #controls {
@@ -76,8 +76,8 @@
 
         #scanned-products-container {
             width: 640px;
-            max-height: 300px; /* Limit the height of the scanned items container */
-            overflow-y: scroll; /* Enable scrolling */
+            max-height: 300px;
+            overflow-y: scroll;
             background-color: #fff;
             border: 1px solid #ddd;
             border-radius: 8px;
@@ -139,8 +139,7 @@
 <body>
     <h1>Barcode Scanner</h1>
     <div id="interactive" class="viewport">
-        <!-- The video feed will be positioned and sized within this div -->
-        <video></video>
+        <video id="video" autoplay></video>
     </div>
     <div id="controls">
         <button id="start-button">Start Scanning</button>
@@ -160,7 +159,7 @@
         let debounceTimer = null;
 
         function updateProductQuantity(barcode, increment) {
-            const productElement = document.querySelector(`[data-barcode="${barcode}"] .quantity`);
+            const productElement = document.querySelector([data-barcode="${barcode}"] .quantity);
             if (productElement) {
                 productQuantities[barcode] = Math.max(0, (productQuantities[barcode] || 0) + increment);
                 productElement.textContent = productQuantities[barcode];
@@ -212,7 +211,7 @@
                     updateProductQuantity(barcode, 1);
                 }
             } else {
-                productList.innerHTML += `<li>Product not found for barcode: ${barcode}</li>`;
+                productList.innerHTML += <li>Product not found for barcode: ${barcode}</li>;
             }
         }
 
@@ -239,11 +238,11 @@
                 inputStream: {
                     name: "Live",
                     type: "LiveStream",
-                    target: document.querySelector('#interactive video'),
+                    target: document.querySelector('#interactive'),
                     constraints: {
                         facingMode: "environment",
-                        width: { ideal: 640 },  // Adjusting the width for simpler camera access
-                        height: { ideal: 480 }   // Adjusting the height for simpler camera access
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
                     }
                 },
                 locator: {
@@ -263,31 +262,42 @@
                 console.log("Initialization finished. Ready to start scanning");
             });
 
-            Quagga.onDetected(function(result) {
-                let barcode = result.codeResult.code;
-                if (isValidBarcode(barcode)) {
-                    if (barcode !== lastBarcode) {
-                        lastBarcode = barcode;
+            Quagga.onProcessed(function(result) {
+                if (result) {
+                    var drawingCtx = Quagga.canvas.ctx.overlay,
+                        drawingCanvas = Quagga.canvas.dom.overlay;
+
+                    if (result.boxes) {
+                        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                        result.boxes.filter(function (box) {
+                            return box !== result.box;
+                        }).forEach(function (box) {
+                            Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 2});
+                        });
+                    }
+
+                    if (result.box) {
+                        Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "#00F", lineWidth: 2});
+                    }
+
+                    if (result.codeResult && result.codeResult.code) {
                         clearTimeout(debounceTimer);
                         debounceTimer = setTimeout(() => {
-                            lastBarcode = "";
-                        }, 1000);
-                        displayProductDetails(barcode);
+                            if (result.codeResult.code !== lastBarcode) {
+                                lastBarcode = result.codeResult.code;
+                                console.log("Barcode detected and processed: [" + result.codeResult.code + "]", result);
+                                displayProductDetails(result.codeResult.code);
+                            }
+                        }, 1000);  // Adjust the debounce delay to avoid multiple detections
                     }
                 }
             });
         }
 
-        function isValidBarcode(barcode) {
-            return /^\d{6,12}$/.test(barcode); // Validates 6 to 12 digit barcodes
-        }
+        document.getElementById('start-button').addEventListener('click', startScanning);
+        document.getElementById('stop-button').addEventListener('click', stopScanning);
 
-        // Ensure the buttons are set up after the page loads
-        window.addEventListener('load', function() {
-            document.getElementById('start-button').addEventListener('click', startScanning);
-            document.getElementById('stop-button').addEventListener('click', stopScanning);
-            setupQuagga();  // Initialize Quagga when the page loads
-        });
+        setupQuagga();
     </script>
 </body>
 </html>
