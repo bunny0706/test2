@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barcode Scanner with Product Details</title>
+    <title>Mobile Barcode Scanner</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding: 20px;
+            padding: 10px;
+            margin: 0;
         }
         #interactive {
-            margin: 0 auto;
             width: 100%;
-            max-width: 640px;
+            max-width: 100%;
             height: auto;
             border: 1px solid #ccc;
         }
         #scanned-products {
             list-style: none;
             padding: 0;
+            margin: 20px 0;
         }
         #scanned-products li {
             margin: 10px 0;
@@ -36,7 +37,7 @@
 </head>
 <body>
     <h1>Barcode Scanner</h1>
-    <!-- Only one container for video stream -->
+    <!-- Single container for video stream -->
     <div id="interactive" class="viewport"></div>
     <button id="start-button">Start Scanning</button>
     <button id="stop-button" disabled>Stop Scanning</button>
@@ -107,11 +108,11 @@
                 inputStream: {
                     name: "Live",
                     type: "LiveStream",
-                    target: document.querySelector('#interactive'),
+                    target: document.querySelector('#interactive'), // Single target for video stream
                     constraints: {
                         facingMode: "environment",
-                        width: { min: 640, ideal: 1280, max: 1920 },
-                        height: { min: 480, ideal: 720, max: 1080 }
+                        width: { min: 320, ideal: 640, max: 1280 },  // Adjust width for mobile
+                        height: { min: 240, ideal: 480, max: 720 }  // Adjust height for mobile
                     }
                 },
                 decoder: {
@@ -147,7 +148,6 @@
                         } else {
                             console.log(`Barcode ${barcode} already scanned.`);
                         }
-                        // Adding a small delay to prevent re-scanning the same code
                         setTimeout(() => {
                             lastBarcode = "";
                         }, 1000);
@@ -164,7 +164,7 @@
             handleBarcodeDetection(barcode);
         });
 
-        // Add support for touch events on mobile
+        // Mobile-specific event listeners
         document.getElementById('start-button').addEventListener('click', startScanning);
         document.getElementById('start-button').addEventListener('touchstart', startScanning);
         document.getElementById('stop-button').addEventListener('click', stopScanning);
