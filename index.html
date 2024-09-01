@@ -12,8 +12,9 @@
         }
         #interactive {
             margin: 0 auto;
-            width: 640px;
-            height: 480px;
+            width: 100%;
+            max-width: 640px;
+            height: auto;
             border: 1px solid #ccc;
         }
         #scanned-products {
@@ -25,6 +26,11 @@
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -95,29 +101,31 @@
             }
         }
 
-        Quagga.init({
-            inputStream: {
-                name: "Live",
-                type: "LiveStream",
-                target: document.querySelector('#interactive'),
-                constraints: {
-                    width: 640,
-                    height: 480,
-                    facingMode: "environment" // Use "user" for the front camera
+        function setupQuagga() {
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#interactive'),
+                    constraints: {
+                        facingMode: "environment",
+                        width: { min: 640, ideal: 1280, max: 1920 },
+                        height: { min: 480, ideal: 720, max: 1080 }
+                    }
+                },
+                decoder: {
+                    readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
+                },
+                locate: true
+            }, function(err) {
+                if (err) {
+                    console.error("Initialization error:", err);
+                    alert("Error initializing the scanner: " + err.message);
+                    return;
                 }
-            },
-            decoder: {
-                readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "upc_reader"]
-            },
-            locate: true
-        }, function(err) {
-            if (err) {
-                console.error("Initialization error:", err);
-                alert("Error initializing the scanner: " + err.message);
-                return;
-            }
-            console.log("Initialization finished. Ready to start scanning");
-        });
+                console.log("Initialization finished. Ready to start scanning");
+            });
+        }
 
         function isValidBarcode(barcode) {
             return /^\d{6,12}$/.test(barcode); // Validates 6 to 12 digit barcodes
@@ -155,8 +163,14 @@
             handleBarcodeDetection(barcode);
         });
 
+        // Add support for touch events on mobile
         document.getElementById('start-button').addEventListener('click', startScanning);
+        document.getElementById('start-button').addEventListener('touchstart', startScanning);
         document.getElementById('stop-button').addEventListener('click', stopScanning);
+        document.getElementById('stop-button').addEventListener('touchstart', stopScanning);
+
+        // Initialize Quagga when the page is ready
+        document.addEventListener('DOMContentLoaded', setupQuagga);
     </script>
 </body>
 </html>
